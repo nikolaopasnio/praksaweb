@@ -3,18 +3,19 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const response = await fetch("https://quantumnetwork-server-2121-default-rtdb.europe-west1.firebasedatabase.app/leaderboard.json", {
-      cache: 'no-store' // Ова е клучно за да не ти покажува стари податоци
+      cache: 'no-store'
     });
 
     const data = await response.json();
 
     if (!data) return Response.json([]);
 
-    // Firebase ги дава како { "Nikuc0_": 77 }, го правиме во листа за табелата
-    const leaderboard = Object.entries(data).map(([name, kills]) => ({
+    const leaderboard = Object.entries(data).map(([name, stats]) => ({
       username: name,
-      value: parseInt(kills)
-    })).sort((a, b) => b.value - a.value); // Најдобрите одат најгоре
+      kills: stats.kills ?? 0,
+      deaths: stats.deaths ?? 0,
+      value: stats.kills ?? 0
+    })).sort((a, b) => b.value - a.value);
 
     return Response.json(leaderboard);
   } catch (error) {
