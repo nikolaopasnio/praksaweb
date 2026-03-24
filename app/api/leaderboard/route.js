@@ -1,34 +1,38 @@
-import { NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
 
 export async function GET() {
+  let connection;
+
   try {
-    const connection = await mysql.createConnection({
+    connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      port: 3306,
+      port: parseInt(process.env.DB_PORT) || 3306,
       ssl: {
-        rejectUnauthorized: false // Задолжително за поврзување со Clever Cloud
+        rejectUnauthorized: false
       }
     });
 
-    // ВАЖНО: Бидејќи во твојата табела нема 'username', го користиме 'id' како замена за име.
-    // Ова ќе ги извлече топ 10 играчи според вредноста (kills).
+    // ТУКА Е ИЗМЕНАТА: Го користиме точното име на табелата од твојата слика
+    // Го користиме 'player_uuid' како име и 'player_kills' за вредноста
     const [rows] = await connection.execute(
-      'SELECT id AS username, value FROM player_statistic_player_kills ORDER BY value DESC LIMIT 10'
+      'SELECT player_uuid as username, player_kills as value FROM player_statistic_player_kills ORDER BY player_kills DESC LIMIT 10'
     );
 
-    await connection.end();
-    
-    // Враќање на податоците во JSON формат за твојот page.js
-    return NextResponse.json(rows);
+    return new Response(JSON.stringify(rows), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
   } catch (error) {
-    console.error("Database Error:", error);
-    return NextResponse.json({ 
-      error: "Грешка при поврзување со базата", 
-      details: error.message 
-    }, { status: 500 });
+    console.error('Грешка во базата:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } finally {
+    if (connection) await connection.end();
   }
 }
