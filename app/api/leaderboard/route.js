@@ -1,5 +1,8 @@
 import mysql from 'mysql2/promise';
 
+// ОВАА ЛИНИЈА Е КЛУЧНА - го исклучува кеширањето на Vercel
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   let connection;
   try {
@@ -12,31 +15,26 @@ export async function GET() {
       ssl: { rejectUnauthorized: false }
     });
 
-    // 1. Прво проверуваме дали воопшто има нешто во табелата
+    // Ги влечеме податоците и ги подредуваме од најмногу кон најмалку убиства
     const [rows] = await connection.execute(
-      'SELECT * FROM player_statistic_player_kills LIMIT 10'
+      'SELECT player_uuid, player_kills FROM player_statistic_player_kills WHERE player_kills > 0 ORDER BY player_kills DESC LIMIT 10'
     );
 
-    // Ако нема ништо, праќаме тест податок за да видиме дали работи дизајнот
     if (rows.length === 0) {
-      console.log("Базата е празна!");
-      return Response.json([
-        { username: "DATABASE_EMPTY", value: 0 }
-      ]);
+      return Response.json([{ username: "No Kills Yet", value: 0 }]);
     }
 
-    // 2. Ако има податоци, ги мапираме точно според твојата база
-    // Ги користиме колоните што ги видовме на PHPMyAdmin
+    // Ги мапираме колоните точно како што ги бара фронтендот
     const formattedData = rows.map(row => ({
-      username: row.player_uuid || row.username || "Unknown",
-      value: row.player_kills || row.kills || 0
+      username: row.player_uuid.substring(0, 8) + "...", // Кратиме UUID за да не го грди дизајнот
+      value: row.player_kills
     }));
 
     return Response.json(formattedData);
 
   } catch (error) {
-    console.error('Грешка:', error.message);
-    return Response.json([{ username: "ERROR: " + error.message.substring(0, 15), value: 500 }]);
+    console.error('Database Error:', error.message);
+    return Response.json([{ username: "DB_ERROR", value: 0 }], { status: 500 });
   } finally {
     if (connection) await connection.end();
   }
