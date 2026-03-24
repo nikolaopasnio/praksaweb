@@ -15,8 +15,7 @@ export async function GET() {
       }
     });
 
-    // ТУКА Е ИЗМЕНАТА: Го користиме точното име на табелата од твојата слика
-    // Го користиме 'player_uuid' како име и 'player_kills' за вредноста
+    // Оваа линија ги користи точните имиња на табелата и колоните од твојата слика
     const [rows] = await connection.execute(
       'SELECT player_uuid as username, player_kills as value FROM player_statistic_player_kills ORDER BY player_kills DESC LIMIT 10'
     );
@@ -27,12 +26,14 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Грешка во базата:', error);
+    console.error('Database Error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   } finally {
-    if (connection) await connection.end();
+    if (connection) {
+      await connection.end();
+    }
   }
 }
