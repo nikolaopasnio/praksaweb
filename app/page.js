@@ -326,7 +326,10 @@ export default function Home() {
                           alt="head"
                           onError={(e) => { e.target.src = "https://crafatar.com/avatars/steve?size=24" }}
                         />
-                        {(player?.username || "UNKNOWN").toUpperCase()}
+                        {/* ПОПРАВКА: Ограничување на должината на името */}
+                        {player?.username && player.username.length > 15
+                          ? player.username.substring(0, 10) + "..."
+                          : (player?.username || "UNKNOWN").toUpperCase()}
                       </td>
                       <td>{(player?.value || 0).toLocaleString()}</td>
                     </tr>
