@@ -1,49 +1,48 @@
 import mysql from 'mysql2/promise';
 
-// Ова спречува Vercel да го кешира сајтот (секогаш влече свежи податоци)
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   let connection;
   try {
+    // 1. Проверка дали воопшто се вчитани променливите од Vercel
+    if (!process.env.DB_HOST || !process.env.DB_PASSWORD) {
+      return Response.json([{ username: "MISSING_ENV", value: 0 }]);
+    }
+
+    // 2. Поврзување со податоците од Clever Cloud
     connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      port: parseInt(process.env.DB_PORT) || 3306,
-      ssl: { rejectUnauthorized: false }
+      port: 3306, // Стандардна порта според Clever Cloud
+      ssl: { rejectUnauthorized: false },
+      connectTimeout: 10000
     });
 
-    // Овој SQL е направен да работи со твоите табели од сликите
-    const [rows] = await connection.execute(`
-      SELECT 
-        player_uuid as uuid, 
-        player_kills as kills
-      FROM player_statistic_player_kills 
-      ORDER BY player_kills DESC 
-      LIMIT 10
-    `);
+    // 3. SQL Query за табелата што ја видовме во PHPMyAdmin
+    const [rows] = await connection.execute(
+      'SELECT player_uuid, player_kills FROM player_statistic_player_kills ORDER BY player_kills DESC LIMIT 10'
+    );
 
-    // Ако нема убиства во базата
+    await connection.end();
+
     if (rows.length === 0) {
-      return Response.json([{ username: "No Stats Yet", value: 0 }]);
+      return Response.json([{ username: "NO_DATA_IN_DB", value: 0 }]);
     }
 
-    // Го средуваме форматот за твојот дизајн
-    const data = rows.map(row => ({
-      // Ако е долго UUID, земи ги само првите 8 карактери за да биде убаво
-      username: row.uuid.length > 16 ? row.uuid.substring(0, 8) : row.uuid,
-      value: row.kills
-    }));
-
-    return Response.json(data);
+    return Response.json(rows.map(r => ({
+      username: r.player_uuid.substring(0, 8), // Го кратиме UUID-то за да изгледа подобро
+      value: r.player_kills
+    })));
 
   } catch (error) {
-    console.error('Clever Cloud Error:', error.message);
-    // Ова ќе ти испише на екранот ако има проблем со лозинка или хост
-    return Response.json([{ username: "Conn_Error", value: 0 }], { status: 500 });
-  } finally {
-    if (connection) await connection.end();
+    console.error(error);
+    // Ова ќе ни ја каже точната грешка на екранот наместо само "500"
+    const errorMsg = error.message.includes('Access denied') ? 'WRONG_PASS' :
+      error.message.includes('ENOTFOUND') ? 'BAD_HOST' : 'CONN_FAIL';
+
+    return Response.json([{ username: errorMsg, value: 0 }]);
   }
 }
