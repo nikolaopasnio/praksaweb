@@ -17,6 +17,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+        <script type="module" src="/auth.js"></script>
       </body>
     </html>
   );

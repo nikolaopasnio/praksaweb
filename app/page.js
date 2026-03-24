@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 export default function Home() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [onlinePlayers, setOnlinePlayers] = useState(1540);
+  const [onlinePlayers, setOnlinePlayers] = useState(null);
 
   useEffect(() => {
     // 1. Fetch Leaderboard Data
@@ -117,11 +117,18 @@ export default function Home() {
     startCountdown("countdown-pvp", d1);
     startCountdown("countdown-build", d2);
 
-    // 6. Online Players Fluctuation
-    const playersInterval = setInterval(() => {
-      setOnlinePlayers((prev) => prev + Math.floor(Math.random() * 21) - 10);
-    }, 5000);
-
+    // 6. Real Online Players from Minecraft Server
+    const fetchPlayers = async () => {
+      try {
+        const res = await fetch("/api/players");
+        const data = await res.json();
+        setOnlinePlayers(data.online);
+      } catch (err) {
+        setOnlinePlayers(0);
+      }
+    };
+    fetchPlayers();
+    const playersInterval = setInterval(fetchPlayers, 2000);
     return () => {
       clearInterval(interval);
       clearInterval(playersInterval);
@@ -130,7 +137,7 @@ export default function Home() {
   }, []);
 
   const copyIP = () => {
-    const ip = "PLAY.QUANTUM.COM";
+    const ip = "asia-trail.gl.joinmc.link";
     navigator.clipboard.writeText(ip).then(() => {
       const toast = document.getElementById("toast");
       if (toast) {
@@ -200,10 +207,16 @@ export default function Home() {
           <li><a href="#home">HOME</a></li>
           <li><a href="#about">ABOUT</a></li>
           <li><a href="#store">STORE</a></li>
+          <li><a href="#staff">STAFF</a></li>
+          <li><a href="#info">HELP</a></li>
         </ul>
 
         <div className="nav-auth">
           <button className="mc-btn nav-login-btn" id="navLoginBtn">🔑 LOGIN</button>
+          <div className="nav-user-info" id="navUserInfo" style={{ display: "none" }}>
+            <span className="nav-username" id="navUserLabel"></span>
+            <button className="mc-btn nav-logout-btn" id="navLogoutBtn">LOGOUT</button>
+          </div>
         </div>
 
         <button className="mobile-menu-toggle" id="mobileMenuBtn">☰</button>
@@ -217,11 +230,13 @@ export default function Home() {
 
           <div className="mc-dark-panel live-stats glowing-border">
             <span className="pulse-dot">🟢</span>
-            <span className="shadow-text" id="onlinePlayers">{(onlinePlayers || 0).toLocaleString()} PLAYERS ONLINE</span>
+            <span className="shadow-text" id="onlinePlayers">
+              {onlinePlayers === null ? "..." : onlinePlayers.toLocaleString()} PLAYERS ONLINE
+            </span>
           </div>
 
           <div className="mc-dark-panel ip-widget hover-scale" id="ipWidget" onClick={copyIP}>
-            <span className="ip-text shadow-text" id="ipText">PLAY.QUANTUM.COM</span>
+            <span className="ip-text shadow-text" id="ipText">asia-trail.gl.joinmc.link</span>
             <span className="copy-hint" id="copyHint">CLICK TO COPY IP</span>
           </div>
 
@@ -302,6 +317,89 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Meet the Staff Section */}
+      <section id="staff" className="section-padding scroll-animate">
+        <h2 className="section-title shadow-text">Meet the <span className="cyan-text">Staff</span></h2>
+        <p className="section-subtitle">Our dedicated team behind Quantum Network</p>
+        
+        <div className="staff-grid">
+          <div className="mc-panel staff-card">
+            <img src="https://mc-heads.net/body/nikolaopasnio" alt="Nikola" className="staff-body" />
+            <h3>Nikola</h3>
+            <div className="staff-role shadow-text">OWNER</div>
+            <p>Lead Developer & Founder</p>
+          </div>
+          
+          <div className="mc-panel staff-card">
+            <img src="https://mc-heads.net/body/MHF_Steve" alt="Admin" className="staff-body" />
+            <h3>QuantumAdmin</h3>
+            <div className="staff-role shadow-text" style={{color: "var(--red)"}}>ADMINISTRATOR</div>
+            <p>Infrastructure & Community</p>
+          </div>
+          
+          <div className="mc-panel staff-card">
+            <img src="https://mc-heads.net/body/MHF_Alex" alt="Moderator" className="staff-body" />
+            <h3>VoxelGuard</h3>
+            <div className="staff-role shadow-text" style={{color: "var(--gold)"}}>MODERATOR</div>
+            <p>Rules & Fair Play</p>
+          </div>
+          
+          <div className="mc-panel staff-card">
+            <img src="https://mc-heads.net/body/MHF_Enderman" alt="Helper" className="staff-body" />
+            <h3>PixelHelper</h3>
+            <div className="staff-role shadow-text" style={{color: "var(--green)"}}>HELPER</div>
+            <p>Player Support & Welcoming</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Information Hub Section */}
+      <section id="info" className="section-padding scroll-animate">
+        <h2 className="section-title shadow-text">Information <span className="gold-text">Hub</span></h2>
+        <p className="section-subtitle">Quick access to server resources and documentation</p>
+        
+        <div className="grid-container-3">
+          <div className="mc-panel info-card">
+            <h3 className="gold-text"><i className="fa-solid fa-book-open"></i> Server Rules</h3>
+            <ul>
+              <li>• No hacking or unauthorized clients</li>
+              <li>• Respect all community members</li>
+              <li>• No griefing in protected regions</li>
+              <li>• No spam or unsolicited advertising</li>
+            </ul>
+            <div className="wiki-links" style={{marginTop: "15px"}}>
+              <a href="#">READ FULL RULES <i className="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+          
+          <div className="mc-panel info-card">
+            <h3 className="red-text"><i className="fa-solid fa-shield-halved"></i> Support Center</h3>
+            <ul>
+              <li>• Open a technical support ticket</li>
+              <li>• Appeal a gameplay ban/mute</li>
+              <li>• Report player misconduct</li>
+              <li>• Submit a server bug report</li>
+            </ul>
+            <div className="wiki-links" style={{marginTop: "15px"}}>
+              <a href="#">GET ASSISTANCE <i className="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+          
+          <div className="mc-panel info-card">
+            <h3 className="cyan-text"><i className="fa-solid fa-circle-info"></i> Server Wiki</h3>
+            <ul>
+              <li>• New Player - Getting Started</li>
+              <li>• Custom Enchantment Guide</li>
+              <li>• Rank Benefits & Permissions</li>
+              <li>• Global Economy & Trading</li>
+            </ul>
+            <div className="wiki-links" style={{marginTop: "15px"}}>
+              <a href="#">BROWSE WIKI <i className="fa-solid fa-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="stats-vote-wrapper" id="leaderboards">
         <h2 className="section-title">TOP <span className="cyan-text">PLAYERS</span></h2>
         <div className="grid-container-2">
@@ -366,6 +464,110 @@ export default function Home() {
           <p>&copy; 2026 QUANTUM NETWORK. ALL RIGHTS RESERVED.</p>
         </div>
       </footer>
+
+      {/* Auth Toast Notification */}
+      <div className="auth-toast" id="auth-toast"></div>
+
+      {/* ═══════════════════════════════════════════════
+           AUTH MODAL — Login / Register
+      ═══════════════════════════════════════════════ */}
+      <div className="auth-modal-overlay" id="authModal">
+        <div className="auth-modal-card">
+          <button className="auth-modal-close" id="authModalClose">✖</button>
+          <div className="auth-modal-header">
+            <svg className="auth-logo-svg" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="shieldGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: "#111", stopOpacity: 1 }} />
+                  <stop offset="100%" style={{ stopColor: "#333", stopOpacity: 1 }} />
+                </linearGradient>
+                <filter id="glow2">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <path d="M70 10 L120 40 L120 100 L70 130 L20 100 L20 40 Z" fill="url(#shieldGrad2)" stroke="#00AAAA" strokeWidth="6" filter="url(#glow2)" />
+              <g fill="none" strokeWidth="8" strokeLinecap="square" opacity="0.9">
+                <path d="M40 100 L100 40" stroke="#AA00AA" />
+                <path d="M35 105 L45 95" stroke="#AA00AA" strokeWidth="12" />
+                <path d="M100 100 L40 40" stroke="#FFAA00" />
+                <path d="M35 45 L55 25" stroke="#FFAA00" strokeWidth="6" />
+                <path d="M25 55 L45 35" stroke="#FFAA00" strokeWidth="6" />
+              </g>
+              <g filter="url(#glow2)">
+                <rect x="55" y="55" width="30" height="30" fill="#00AAAA" transform="rotate(45 70 70)">
+                  <animate attributeName="fill" values="#00AAAA;#AA00AA;#00AAAA" dur="4s" repeatCount="indefinite" />
+                </rect>
+                <rect x="62" y="62" width="16" height="16" fill="white" transform="rotate(45 70 70)" opacity="0.5" />
+              </g>
+            </svg>
+            <div className="auth-modal-title">QUANTUM <span className="cyan-text">NETWORK</span></div>
+            <div className="auth-modal-subtitle">Join thousands of players</div>
+          </div>
+
+          <div className="auth-tabs">
+            <button className="auth-tab-btn active" data-tab="login">LOGIN</button>
+            <button className="auth-tab-btn" data-tab="register">REGISTER</button>
+          </div>
+
+          <form className="auth-form" id="login-form">
+            <div className="auth-field">
+              <label>EMAIL</label>
+              <input type="email" id="login-email" placeholder="player@quantum.com" required autoComplete="email" />
+            </div>
+            <div className="auth-field">
+              <label>PASSWORD</label>
+              <input type="password" id="login-password" placeholder="••••••••" required autoComplete="current-password" />
+            </div>
+            <button type="submit" className="mc-btn auth-submit-btn primary">⚡ LOGIN</button>
+
+            <div className="auth-divider"><span>OR</span></div>
+
+            <button type="button" className="google-signin-btn">
+              <svg className="google-logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                <path fill="none" d="M0 0h48v48H0z" />
+              </svg>
+              SIGN IN WITH GOOGLE
+            </button>
+          </form>
+
+          <form className="auth-form" id="register-form" style={{ display: "none" }}>
+            <div className="auth-field">
+              <label>USERNAME</label>
+              <input type="text" id="reg-username" placeholder="YourPlayerName" required autoComplete="username" />
+            </div>
+            <div className="auth-field">
+              <label>EMAIL</label>
+              <input type="email" id="reg-email" placeholder="player@quantum.com" required autoComplete="email" />
+            </div>
+            <div className="auth-field">
+              <label>PASSWORD</label>
+              <input type="password" id="reg-password" placeholder="Min. 6 characters" required autoComplete="new-password" />
+            </div>
+            <button type="submit" className="mc-btn auth-submit-btn primary">🚀 CREATE ACCOUNT</button>
+
+            <div className="auth-divider"><span>OR</span></div>
+
+            <button type="button" className="google-signin-btn">
+              <svg className="google-logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                <path fill="none" d="M0 0h48v48H0z" />
+              </svg>
+              SIGN UP WITH GOOGLE
+            </button>
+          </form>
+        </div>
+      </div>
     </>
   );
 }
