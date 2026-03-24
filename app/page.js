@@ -215,7 +215,7 @@ export default function Home() {
 
           <div className="mc-dark-panel live-stats glowing-border">
             <span className="pulse-dot">🟢</span>
-            <span className="shadow-text" id="onlinePlayers">{onlinePlayers.toLocaleString()} PLAYERS ONLINE</span>
+            <span className="shadow-text" id="onlinePlayers">{(onlinePlayers || 0).toLocaleString()} PLAYERS ONLINE</span>
           </div>
 
           <div className="mc-dark-panel ip-widget hover-scale" id="ipWidget" onClick={copyIP}>
@@ -315,15 +315,20 @@ export default function Home() {
               <tbody>
                 {loading ? (
                   <tr><td colSpan="3" style={{ textAlign: "center" }}>LOADING STATS...</td></tr>
-                ) : leaderboard.length > 0 ? (
+                ) : leaderboard && leaderboard.length > 0 ? (
                   leaderboard.map((player, index) => (
                     <tr key={index}>
                       <td className={index === 0 ? "gold-text" : ""}>#{index + 1}</td>
                       <td>
-                        <img src={`https://crafatar.com/avatars/${player.username}?size=24`} className="inline-head" onError={(e) => e.target.src = "https://crafatar.com/avatars/steve?size=24"} />
-                        {player.username.toUpperCase()}
+                        <img
+                          src={`https://crafatar.com/avatars/${player?.username || "steve"}?size=24`}
+                          className="inline-head"
+                          alt="head"
+                          onError={(e) => { e.target.src = "https://crafatar.com/avatars/steve?size=24" }}
+                        />
+                        {(player?.username || "UNKNOWN").toUpperCase()}
                       </td>
-                      <td>{player.value.toLocaleString()}</td>
+                      <td>{(player?.value || 0).toLocaleString()}</td>
                     </tr>
                   ))
                 ) : (
