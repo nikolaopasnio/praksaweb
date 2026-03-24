@@ -1,40 +1,55 @@
 import mysql from 'mysql2/promise';
 
-// ОВАА ЛИНИЈА Е КЛУЧНА - го исклучува кеширањето на Vercel
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   let connection;
   try {
+    // 1. Поврзување со твоите Vercel променливи
     connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       port: parseInt(process.env.DB_PORT) || 3306,
+      // Пробај го ова - кај некои верзии на Clever Cloud помага ако се тргне или смени SSL
       ssl: { rejectUnauthorized: false }
     });
 
-    // Ги влечеме податоците и ги подредуваме од најмногу кон најмалку убиства
-    const [rows] = await connection.execute(
-      'SELECT player_uuid, player_kills FROM player_statistic_player_kills WHERE player_kills > 0 ORDER BY player_kills DESC LIMIT 10'
-    );
+    // 2. SQL Query што ги влече убиствата и се обидува да ги најде имињата
+    // Ја користиме табелата 'player_statistic_player_kills' што ја видовме на сликата
+    const [rows] = await connection.execute(`
+      SELECT 
+        s.player_uuid as uuid,
+        COALESCE(e.player_name, s.player_uuid) as username, 
+        s.player_kills as value 
+      FROM player_statistic_player_kills s
+      LEFT JOIN player_extras e ON s.player_uuid = e.player_uuid
+      ORDER BY s.player_kills DESC 
+      LIMIT 10
+    `);
 
+    // 3. Ако табелата е празна, прати тест податоци за да видиш дека работи дизајнот
     if (rows.length === 0) {
-      return Response.json([{ username: "No Kills Yet", value: 0 }]);
+      return new Response(JSON.stringify([
+        { username: "No Data Yet", value: 0 }
+      ]), { status: 200 });
     }
 
-    // Ги мапираме колоните точно како што ги бара фронтендот
-    const formattedData = rows.map(row => ({
-      username: row.player_uuid.substring(0, 8) + "...", // Кратиме UUID за да не го грди дизајнот
-      value: row.player_kills
+    // 4. Форматирање: Ако името е предолго (UUID), скрати го
+    const formatted = rows.map(r => ({
+      username: r.username.length > 16 ? r.username.substring(0, 8) + '...' : r.username,
+      value: r.value
     }));
 
-    return Response.json(formattedData);
+    return new Response(JSON.stringify(formatted), { status: 200 });
 
   } catch (error) {
     console.error('Database Error:', error.message);
-    return Response.json([{ username: "DB_ERROR", value: 0 }], { status: 500 });
+    // Ова ќе ти каже точно зошто не се поврзува (на пр. "Access denied" или "Invalid Host")
+    return new Response(JSON.stringify([
+      { username: "Error: " + error.message.substring(0, 10), value: 0 }
+    ]), { status: 200 });
   } finally {
     if (connection) await connection.end();
   }
