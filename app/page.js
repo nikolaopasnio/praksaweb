@@ -23,6 +23,7 @@ export default function Home() {
       }
     };
     fetchLeaderboard();
+    const refreshInterval = setInterval(fetchLeaderboard, 5000);
 
     // 2. Initialize Particles.js
     if (window.particlesJS) {
@@ -124,6 +125,7 @@ export default function Home() {
     return () => {
       clearInterval(interval);
       clearInterval(playersInterval);
+      clearInterval(refreshInterval);
     };
   }, []);
 
@@ -326,7 +328,6 @@ export default function Home() {
                           alt="head"
                           onError={(e) => { e.target.src = "https://crafatar.com/avatars/steve?size=24" }}
                         />
-                        {/* ПОПРАВКА: Ограничување на должината на името */}
                         {player?.username && player.username.length > 15
                           ? player.username.substring(0, 10) + "..."
                           : (player?.username || "UNKNOWN").toUpperCase()}
